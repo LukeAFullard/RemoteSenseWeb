@@ -1528,6 +1528,11 @@ one Sentinel Item
 one visual COG
 ```
 
+- [x] MapLibre
+- [x] STAC (visual extraction)
+- [x] one Sentinel Item
+- [x] one visual COG
+
 Success criterion:
 
 > User can search an area and see Sentinel imagery directly from the COG.
