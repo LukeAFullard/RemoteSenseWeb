@@ -1545,13 +1545,13 @@ No analytics yet.
 
 Implement:
 
-- [ ] STAC asset discovery
-- [ ] GeoTIFF metadata
-- [ ] CRS handling
-- [ ] AOI transformation
-- [ ] raster window calculation
-- [ ] HTTP Range access
-- [ ] TypedArray extraction
+- [x] STAC asset discovery
+- [x] GeoTIFF metadata
+- [x] CRS handling
+- [x] AOI transformation
+- [x] raster window calculation
+- [x] HTTP Range access
+- [x] TypedArray extraction
 
 Success criterion:
 
