@@ -175,8 +175,8 @@ Use:
 This is sufficient for:
 
 - NDVI
-- NDMI
-- NBR
+- [ ] NDMI
+- [ ] NBR
 - basic statistics
 - masking
 - pixel arithmetic
@@ -189,8 +189,8 @@ Add WASM where profiling demonstrates a benefit.
 
 Add Pyodide for advanced Python functionality such as:
 
-- scipy
-- statsmodels
+- [ ] scipy
+- [ ] statsmodels
 - advanced time-series analysis
 - custom Python algorithms
 
@@ -199,7 +199,7 @@ Add Pyodide for advanced Python functionality such as:
 Consider DuckDB-Wasm for:
 
 - large analytical tables
-- Arrow/Parquet
+- [ ] Arrow/Parquet
 - complex filtering
 - grouping
 - joins
@@ -231,7 +231,7 @@ Use:
 
 for local caching of:
 
-- STAC metadata
+- [ ] STAC metadata
 - search results
 - analysis configuration
 - computed time-series observations
@@ -359,8 +359,8 @@ Suitable for:
 
 Suitable for:
 
-- median NDVI
-- mean NDVI
+- [ ] median NDVI
+- [ ] mean NDVI
 - distributions
 - time series
 
@@ -836,7 +836,7 @@ Once a friendly framing is established for each, the following can be exposed:
 
 - **Moisture Stress (NDMI)**
 - **Fire/Burn Damage (NBR)**
-- EVI, SAVI, NDWI, etc.
+- [ ] EVI, SAVI, NDWI, etc.
 
 These should not be shown in the primary UI at launch.
 
@@ -919,8 +919,8 @@ Only retain the final observation statistics unless the user explicitly requests
 
 For each observation calculate at minimum:
 
-- median
-- mean
+- [ ] median
+- [ ] mean
 - standard deviation
 - minimum
 - maximum
@@ -1540,13 +1540,13 @@ No analytics yet.
 
 Implement:
 
-- STAC asset discovery
-- GeoTIFF metadata
-- CRS handling
-- AOI transformation
-- raster window calculation
-- HTTP Range access
-- TypedArray extraction
+- [ ] STAC asset discovery
+- [ ] GeoTIFF metadata
+- [ ] CRS handling
+- [ ] AOI transformation
+- [ ] raster window calculation
+- [ ] HTTP Range access
+- [ ] TypedArray extraction
 
 Success criterion:
 
@@ -1558,13 +1558,13 @@ Success criterion:
 
 Implement:
 
-- B4
-- B8
-- nodata handling
-- NDVI calculation
-- median
-- mean
-- valid-pixel count
+- [ ] B4
+- [ ] B8
+- [ ] nodata handling
+- [ ] NDVI calculation
+- [ ] median
+- [ ] mean
+- [ ] valid-pixel count
 
 Success criterion:
 
@@ -1576,12 +1576,12 @@ Success criterion:
 
 Add:
 
-- SCL
-- cloud mask
-- shadow mask
-- cirrus mask
-- AOI mask
-- valid fraction
+- [ ] SCL
+- [ ] cloud mask
+- [ ] shadow mask
+- [ ] cirrus mask
+- [ ] AOI mask
+- [ ] valid fraction
 
 Success criterion:
 
@@ -1593,12 +1593,12 @@ Success criterion:
 
 Implement:
 
-- STAC pagination
-- observation grouping
-- multi-tile handling
-- repeated processing
-- progressive chart updates
-- observation quality filtering
+- [ ] STAC pagination
+- [ ] observation grouping
+- [ ] multi-tile handling
+- [ ] repeated processing
+- [ ] progressive chart updates
+- [ ] observation quality filtering
 
 Success criterion:
 
@@ -1610,11 +1610,11 @@ Success criterion:
 
 Implement:
 
-- click chart → map date
-- click map → time series
-- date slider
-- imagery layer
-- quality indicators
+- [ ] click chart → map date
+- [ ] click map → time series
+- [ ] date slider
+- [ ] imagery layer
+- [ ] quality indicators
 
 Success criterion:
 
@@ -1626,9 +1626,9 @@ Success criterion:
 
 Add IndexedDB caching for:
 
-- STAC metadata
-- analysis results
-- optional raster windows
+- [ ] STAC metadata
+- [ ] analysis results
+- [ ] optional raster windows
 
 Success criterion:
 
@@ -1640,21 +1640,21 @@ Success criterion:
 
 Benchmark:
 
-- small AOI
-- large AOI
-- one scene
-- 100 scenes
-- multiple tiles
-- poor cloud conditions
-- slow network
+- [ ] small AOI
+- [ ] large AOI
+- [ ] one scene
+- [ ] 100 scenes
+- [ ] multiple tiles
+- [ ] poor cloud conditions
+- [ ] slow network
 
 Optimise:
 
-- chunk size
-- concurrency
-- caching
-- request scheduling
-- memory usage
+- [ ] chunk size
+- [ ] concurrency
+- [ ] caching
+- [ ] request scheduling
+- [ ] memory usage
 
 Only add WASM where benchmarks justify it.
 
@@ -1664,11 +1664,11 @@ Only add WASM where benchmarks justify it.
 
 Add:
 
-- NDMI
-- NBR
-- EVI
-- NDWI
-- red-edge indices
+- [ ] NDMI
+- [ ] NBR
+- [ ] EVI
+- [ ] NDWI
+- [ ] red-edge indices
 
 Convert the analytical engine into a general spectral-expression system.
 
@@ -1682,19 +1682,19 @@ Only after the core system works:
 
 For:
 
-- statistical models
-- scipy
-- statsmodels
-- time-series analysis
+- [ ] statistical models
+- [ ] scipy
+- [ ] statsmodels
+- [ ] time-series analysis
 
 ### DuckDB-Wasm
 
 For:
 
-- Arrow
-- Parquet
-- large observation tables
-- complex analytical queries
+- [ ] Arrow
+- [ ] Parquet
+- [ ] large observation tables
+- [ ] complex analytical queries
 
 These should remain optional modules.
 
@@ -1877,19 +1877,19 @@ The first production-quality MVP should contain:
 
 ### Analysis
 
-- B4
-- B8
-- SCL
+- [ ] B4
+- [ ] B8
+- [ ] SCL
 - NDVI
-- median
-- valid fraction
+- [ ] median
+- [ ] valid fraction
 
 ### Visualisation
 
 - Sentinel imagery
 - NDVI time series
 - date selection
-- quality indicators
+- [ ] quality indicators
 
 ### Export
 
