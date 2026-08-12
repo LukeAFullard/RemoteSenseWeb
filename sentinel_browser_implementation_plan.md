@@ -1563,13 +1563,13 @@ Success criterion:
 
 Implement:
 
-- [ ] B4
-- [ ] B8
-- [ ] nodata handling
-- [ ] NDVI calculation
-- [ ] median
-- [ ] mean
-- [ ] valid-pixel count
+- [x] B4
+- [x] B8
+- [x] nodata handling
+- [x] NDVI calculation
+- [x] median
+- [x] mean
+- [x] valid-pixel count
 
 Success criterion:
 
