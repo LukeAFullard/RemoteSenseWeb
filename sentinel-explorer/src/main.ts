@@ -2,6 +2,8 @@ import './style.css';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { cogProtocol } from '@geomatico/maplibre-cog-protocol';
+import proj4 from 'proj4';
+import { fromUrl } from 'geotiff';
 
 // Register the COG protocol
 maplibregl.addProtocol('cog', cogProtocol);
@@ -9,6 +11,9 @@ maplibregl.addProtocol('cog', cogProtocol);
 // Bounding box roughly corresponding to a region (e.g. California Central Valley)
 const bbox = [-122.2, 38.0, -121.8, 38.4];
 const center = [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2];
+
+// Small test AOI for raster extraction within the main bbox
+const testAoiBbox = [-122.05, 38.15, -121.95, 38.25];
 
 const map = new maplibregl.Map({
     container: 'map',
@@ -52,6 +57,101 @@ async function fetchStacAndAddLayer() {
         if (data.features && data.features.length > 0) {
             const item = data.features[0];
             const visualCogUrl = item.assets.visual.href;
+            const redCogUrl = item.assets.red.href;
+            const epsgCode = item.properties['proj:epsg'];
+
+            console.log('Discovered Red COG URL:', redCogUrl);
+            console.log('Discovered EPSG Code:', epsgCode);
+
+            // Setup proj4 for coordinate transformation
+            // We know the source is WGS84 (EPSG:4326)
+            // We need to dynamically construct the UTM projection for the destination
+            const isNorth = epsgCode >= 32600 && epsgCode <= 32660;
+            const utmZone = isNorth ? epsgCode - 32600 : epsgCode - 32700;
+            const utmProjString = `+proj=utm +zone=${utmZone} ${isNorth ? '+north' : '+south'} +datum=WGS84 +units=m +no_defs`;
+            proj4.defs(`EPSG:${epsgCode}`, utmProjString);
+
+            // Transform the test AOI bbox to the UTM CRS
+            const minLonLat = [testAoiBbox[0], testAoiBbox[1]];
+            const maxLonLat = [testAoiBbox[2], testAoiBbox[3]];
+            const minUtm = proj4('EPSG:4326', `EPSG:${epsgCode}`, minLonLat);
+            const maxUtm = proj4('EPSG:4326', `EPSG:${epsgCode}`, maxLonLat);
+
+            const testAoiUtmBbox = [
+                Math.min(minUtm[0], maxUtm[0]),
+                Math.min(minUtm[1], maxUtm[1]),
+                Math.max(minUtm[0], maxUtm[0]),
+                Math.max(minUtm[1], maxUtm[1])
+            ];
+
+            console.log('Test AOI Bbox (WGS84):', testAoiBbox);
+            console.log(`Test AOI Bbox (UTM EPSG:${epsgCode}):`, testAoiUtmBbox);
+
+            // Raster Window Calculation & Extraction for B04 (Red)
+            try {
+                // Initialize GeoTIFF from URL
+                const tiff = await fromUrl(redCogUrl);
+                const image = await tiff.getImage();
+
+                // Get bounding box and pixel dimensions from the image metadata
+                const imageBbox = image.getBoundingBox();
+                const imageWidth = image.getWidth();
+                const imageHeight = image.getHeight();
+
+                // Calculate pixel resolution
+                const pixelWidth = (imageBbox[2] - imageBbox[0]) / imageWidth;
+                const pixelHeight = (imageBbox[3] - imageBbox[1]) / imageHeight;
+
+                console.log('GeoTIFF Metadata:', {
+                    bbox: imageBbox,
+                    width: imageWidth,
+                    height: imageHeight,
+                    pixelWidth: pixelWidth,
+                    pixelHeight: pixelHeight
+                });
+
+                // Calculate the window in pixel coordinates
+                // Math.floor/Math.ceil to ensure we cover the entire AOI
+                let minX = Math.floor((testAoiUtmBbox[0] - imageBbox[0]) / pixelWidth);
+                let maxX = Math.ceil((testAoiUtmBbox[2] - imageBbox[0]) / pixelWidth);
+
+                // Note: GeoTIFF Y coordinates usually start from the top (max Y) and go down.
+                // So imageBbox[3] is the top, and pixelHeight is positive or negative depending on the implementation.
+                // In geotiff.js, getBoundingBox returns [minX, minY, maxX, maxY].
+                // The origin is usually at [minX, maxY].
+                let minY = Math.floor((imageBbox[3] - testAoiUtmBbox[3]) / pixelHeight);
+                let maxY = Math.ceil((imageBbox[3] - testAoiUtmBbox[1]) / pixelHeight);
+
+                // Clamp to image bounds
+                minX = Math.max(0, Math.min(minX, imageWidth));
+                maxX = Math.max(0, Math.min(maxX, imageWidth));
+                minY = Math.max(0, Math.min(minY, imageHeight));
+                maxY = Math.max(0, Math.min(maxY, imageHeight));
+
+                // Swap Y if they are inverted
+                if (minY > maxY) {
+                    const temp = minY;
+                    minY = maxY;
+                    maxY = temp;
+                }
+
+                console.log('Calculated Raster Window (pixels):', { minX, minY, maxX, maxY });
+
+                if (minX < maxX && minY < maxY) {
+                    // Extract the pixel values using HTTP Range Requests (handled by geotiff.js)
+                    const rasterData = await image.readRasters({
+                        window: [minX, minY, maxX, maxY]
+                    });
+
+                    console.log('Successfully extracted raster data!');
+                    console.log('Data structure:', rasterData);
+                    console.log('Sample pixels (Red B04):', rasterData[0].slice(0, 10));
+                } else {
+                    console.warn('The calculated raster window is empty or out of bounds.');
+                }
+            } catch (rasterError) {
+                console.error('Failed to extract raster window:', rasterError);
+            }
 
             map.addSource('sentinel-2-visual', {
                 type: 'raster',
