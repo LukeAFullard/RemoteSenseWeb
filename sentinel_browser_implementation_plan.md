@@ -1,5 +1,15 @@
 # Serverless Browser-Based Sentinel-2 Explorer — Full Implementation Plan
 
+## 0. User Experience Principles
+
+The application must be designed for **non-expert end users**. The following principles apply to all technical implementation steps:
+- **No jargon in the primary UI:** Translate remote-sensing terms into plain language (e.g., "Vegetation Health" instead of NDVI, "Image Quality" instead of SCL).
+- **Sensible defaults:** Guide users through a workflow ("Where?", "What do you want to know?") rather than requiring up-front technical configuration. Raw controls should be hidden behind an "Advanced" toggle.
+- **Interpretive layers:** Raw data (statistics, cloud cover percentages) must be accompanied by plain-English summaries and visual indicators (e.g., traffic-light quality indicators). Raw data remains available but is not the primary interface.
+- **Mobile-first design:** The interface (map, chart, drawing tools) must be explicitly designed for small screens.
+
+---
+
 ## 1. Project Objective
 
 Build a **serverless, client-side geospatial analysis application** that allows users to discover, inspect, analyse and export Sentinel-2 imagery entirely from their browser.
@@ -87,6 +97,15 @@ External infrastructure is limited to public STAC APIs and cloud-hosted raster a
 - Support CSV/JSON/GeoJSON export.
 - Eventually support more sophisticated statistical analysis through Pyodide/DuckDB-Wasm.
 
+## 3.3 Engineering Risks
+
+The following technical risks must be explicitly managed during implementation:
+
+- **Missing reprojection library:** Transforming user AOIs into Sentinel's UTM-zone CRS requires an explicit reprojection tool (e.g., `proj4js`), which must be added to the technology stack.
+- **Client-side performance on multi-scene time series:** Pulling and decoding numerous COG windows strictly in JS may cause bottlenecks on average hardware. **Real benchmarking must happen early in Phase 2/3**, not delayed until Phase 8.
+- **Reliance on a single STAC provider:** Using only Earth Search (Element 84) creates a single point of failure without SLAs. A fallback strategy or clear error messaging for rate-limits/outages is required.
+- **Multi-tile mosaicking:** Correctly extracting and assembling AOIs spanning multiple tile/UTM-zone boundaries is complex and must be explicitly scoped early.
+
 ---
 
 # 4. Technology Stack
@@ -96,6 +115,7 @@ External infrastructure is limited to public STAC APIs and cloud-hosted raster a
 - TypeScript
 - Vite
 - MapLibre GL JS
+- `proj4js` (or equivalent for handling required UTM CRS reprojections)
 - HTML/CSS or React/Svelte if required
 
 Avoid introducing a large framework unless it provides a genuine UI benefit.
@@ -223,34 +243,28 @@ The cache should have a configurable size/eviction policy.
 
 # 5. User Workflow
 
-The intended user workflow is:
+The intended user workflow is a **guided, plain-language flow**, hiding technical complexity by default:
 
 ```text
-1. Open application
+1. "Where?"
+   (User searches for an address/place or selects an area on the map)
         ↓
-2. Select area
+2. "What do you want to know?"
+   (User selects a goal, e.g., "How healthy is my vegetation?", rather than configuring technical indices)
         ↓
-3. Select date range
+3. Automated Discovery
+   (System applies sensible defaults for dates, cloud thresholds, and fetches STAC imagery)
         ↓
-4. Select analysis
+4. Processing
+   (Progressive processing with plain-language feedback)
         ↓
-5. Discover Sentinel imagery
+5. Plain-Language Results
+   (Display interpretive traffic-light quality indicators and summaries alongside charts)
         ↓
-6. Review available observations
+6. Explore on Map
+   (Click chart to see specific satellite imagery and read-outs)
         ↓
-7. Process selected imagery
-        ↓
-8. Apply quality masking
-        ↓
-9. Calculate spectral index
-        ↓
-10. Aggregate statistics
-        ↓
-11. Display time series
-        ↓
-12. Explore individual dates on map
-        ↓
-13. Export results
+7. Export results (Advanced option)
 ```
 
 ---
@@ -304,27 +318,22 @@ User polygon
 
 ---
 
+## 6.4 Address/Place Search (Geocoding)
+
+Non-expert users should not be expected to manually pan a raw map to find coordinates. Provide an **address/place-name search bar** powered by a geocoding API to easily fly the map to their desired location before they make a selection.
+
+---
+
 # 7. AOI Validation
 
-Before analysis, calculate:
+Before analysis, evaluate the AOI internally for processing footprint, but translate these technical metrics (pixel counts, exact megabytes) into **plain-language user feedback**.
 
-- area
-- bounding box
-- centroid
-- approximate pixel count
-- expected data volume
+Example plain-language messaging:
+- "Small area — should process in a few seconds."
+- "Medium area — this might take a bit longer."
+- "Large area — this may take a minute, want to continue?"
 
-Example:
-
-```text
-AOI area:              2.4 km²
-10 m pixels:           ~24,000
-Expected bands/date:   3
-Estimated data:        ~150 KB/date
-Estimated time series: ~20 MB
-```
-
-The user should receive a warning before very large analyses.
+The user should receive a clear, friendly warning for very large analyses, giving them the option to cancel or proceed.
 
 ---
 
@@ -815,27 +824,21 @@ This makes the system extensible.
 
 # 27. Initial Supported Indices
 
-Start with:
+Start with a tighter MVP focus to reduce the interpretation burden on non-expert users:
 
-### NDVI
+### Vegetation Health (NDVI)
 
-Vegetation greenness.
+Presented to the user as "Vegetation Health" rather than NDVI. This is the sole index for MVP v1.
 
-### NDMI
+### Future Indices (Hidden behind Advanced or framed by purpose)
 
-Vegetation/moisture response.
+Once a friendly framing is established for each, the following can be exposed:
 
-### NBR
+- **Moisture Stress (NDMI)**
+- **Fire/Burn Damage (NBR)**
+- EVI, SAVI, NDWI, etc.
 
-Burn/disturbance response.
-
-Potential future additions:
-
-- EVI
-- SAVI
-- NDWI
-- MNDWI
-- red-edge indices
+These should not be shown in the primary UI at launch.
 
 ---
 
@@ -931,6 +934,8 @@ For each observation calculate at minimum:
 
 The initial chart can use median NDVI.
 
+For end users, this raw data must include an **interpretive layer**. A plain-English summary (e.g., "Vegetation is greener than usual for this time of year") should be displayed prominently alongside the chart, not hidden as raw data.
+
 ---
 
 # 32. Quality Metrics
@@ -944,16 +949,15 @@ total_pixels
 scene_cloud_cover
 ```
 
-Example:
+Translate these raw metrics into a **traffic-light quality indicator** for users:
 
-```text
-Date        NDVI   Valid %
-2026-01-01  0.71   97%
-2026-01-06  0.69   91%
-2026-01-11  0.42   29%
-```
+Example UI Translation:
 
-The third observation should be visually flagged.
+- **Good image quality (Green):** 95%+ valid pixels.
+- **Fair image quality (Yellow):** 80-94% valid pixels.
+- **Poor image quality (Red):** <80% valid pixels.
+
+The raw percentages (e.g., "91% valid") can be available via hover/tooltip or export, but should not be the primary display.
 
 ---
 
